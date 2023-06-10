@@ -1,0 +1,46 @@
+pip install langchain
+
+from langchain import OpenAIApi, Embeddings
+import openai
+
+import config
+
+openai.api_key = config.API_KEY
+
+Copy code
+embeddings = Embeddings()
+
+document = """
+
+
+document_embedding = embeddings.encode([document])
+Copy code
+embeddings = Embeddings()
+
+
+document_parts = [
+    document[:len(document) // 3],
+    document[len(document) // 3: 2 * len(document) // 3],
+    document[2 * len(document) // 3:]
+]
+question = "Your question goes here"
+question_embedding = embeddings.encode([question])
+
+most_relevant_doc = None
+highest_similarity = 0
+
+for index, part in enumerate(document_parts):
+    part_embedding = embeddings.encode([part])
+    similarity = embeddings.similarity(question_embedding, part_embedding)
+    if similarity > highest_similarity:
+        highest_similarity = similarity
+        most_relevant_doc = part
+
+response = openai.Completion.create(
+    engine="davinci-codex",
+    prompt=f"Question: {question}\n\nDocument: {most_relevant_doc}\n\nAnswer:",
+    temperature=0.5,
+    max_tokens=100
+)
+
+answer = response.choices[0].text.strip()
